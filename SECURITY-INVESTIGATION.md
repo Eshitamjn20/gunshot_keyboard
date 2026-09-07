@@ -20,7 +20,7 @@ Do not redistribute a replacement based only on a clean local scan.
   `1.459.88.0`, last updated 2026-09-07 07:15:22 local time.
 - No executable was launched, restored, or excluded during this investigation.
 
-## Earlier local build
+## Earlier local build (removed; historical result)
 
 - File: `dist/KeyBang.exe`
 - SHA-256: `ba22ebab63a8dbb0aa615d6539bd155b147b49c87c4bc4548d270b5cb49a9b91`
@@ -72,7 +72,7 @@ Copied the app source, tests and assets to a separate source directory and
 used new PyInstaller cache, work and output directories. Kept the original
 one-file packaging format and application behavior. All four unit tests passed.
 
-New executable: `clean-build-20260907/dist/KeyBang.exe`
+Current clean executable: `dist/KeyBang.exe` (moved from the temporary clean-build directory without changing its bytes).
 
 SHA-256: `7eec4dd023db702a202c1903eb3dfb43c9ad08177584b2205ea7ef8d275a392b`
 
@@ -95,3 +95,14 @@ hash lock and candidate hash records under `security/evidence/`.
 
 Prepared `security/MICROSOFT-SUBMISSION.md`. The portal requires Microsoft
 sign-in; no submission has been confirmed and there is no vendor verdict.
+
+## Final local cleanup
+
+Kept one application source copy at the repository root and one executable
+at `dist/KeyBang.exe`, with SHA-256
+`7eec4dd023db702a202c1903eb3dfb43c9ad08177584b2205ea7ef8d275a392b`.
+Removed `clean-build-20260907/`, including copied source, duplicate evidence
+and the temporary verification helper. The canonical verification records
+remain in `security/evidence/`. Earlier paths above describe historical work;
+the old executable previously at `dist/KeyBang.exe` is not retained.
+The website checkout is a separate Git repository, not another app variant.

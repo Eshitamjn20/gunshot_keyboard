@@ -56,3 +56,28 @@ original detection occurred on it. A clean verdict on it does not clear v0.1.0.
 Submission tracking: record the ID and result here after the portal confirms
 receipt. No submission ID exists yet. The signed-in Microsoft account/contact
 email must be supplied by the maintainer and kept out of public source history.
+
+## Manual submission steps
+
+1. Visit the portal above. Choose **Software developer**, then sign in.
+2. Choose **Microsoft Defender Antivirus (Windows 11)** and enter
+   **Eshitamjn20** as the developer/company name.
+3. Select the exact sample you want analyzed. The sole current local EXE is
+   `dist/KeyBang.exe`: it is the clean rebuild, not the originally flagged file.
+   Do not claim that the earlier detection occurred on this new hash.
+4. If submitting the original detected file, use **Incorrectly detected as
+   malware/malicious** as your suspected classification, detection
+   `Trojan:Win32/Wacatac.B!ml`, and definitions `1.459.88.0`. This is a request
+   for review, not a claim that Microsoft has already confirmed a false positive.
+5. Paste the Additional information text above. For the rebuilt sample, add:
+   "The attached file is the clean rebuild with SHA-256 7eec4dd023db702a202c1903eb3dfb43c9ad08177584b2205ea7ef8d275a392b.
+   It passed a local scan. The original detection concerns the other hash in
+   this report; please validate this candidate and advise on the original."
+6. Review the form, submit, and save the confirmation/submission ID. Track the
+   result through the portal's submission history. Keep downloads paused.
+
+If the portal offers no appropriate category for validating an undetected
+candidate, do not mislabel it. Request guidance through the portal help using
+both hashes. Reviewing the rebuilt sample cannot establish a verdict on the
+original. If the original is unavailable because Defender removed it, explain
+that; do not disable Defender or restore the sample merely to fill the form.
