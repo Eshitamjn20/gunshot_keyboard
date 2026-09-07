@@ -3,5 +3,6 @@ __pycache__/
 build/
 dist/
 release-build/
+clean-build-*/
 *.spec
 sounds-source.zip
