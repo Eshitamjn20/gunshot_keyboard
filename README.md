@@ -3,6 +3,18 @@
 A free, offline Windows app that plays sound effects as you type, with
 shotgun audio, volume control, and rhythm accents for fast typing.
 
+## Download without Git or Python
+
+Visit the [KeyBang download website](https://eshitamjn20.github.io/gunshot_keyboard/)
+or download `KeyBang.exe` from the [latest release](https://github.com/Eshitamjn20/gunshot_keyboard/releases/latest).
+Open the EXE, preview a sound, and enable sounds. Windows may show a warning
+because the app is unsigned.
+
+The website source is in `docs/`. GitHub Pages serves that folder from `main`.
+Its download button targets the latest release asset named `KeyBang.exe`.
+When publishing updates, build the EXE and attach it under that exact name
+to the new release. Keep the sound credits with the app.
+
 ## Platform support
 
 | Platform | Supported? |
