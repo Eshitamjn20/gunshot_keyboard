@@ -5,8 +5,8 @@ shotgun audio, volume control, and rhythm accents for fast typing.
 
 ## Download without Git or Python
 
-Visit the [KeyBang download website](https://eshitamjn20.github.io/gunshot_keyboard/)
-or download `KeyBang.exe` from the [latest release](https://github.com/Eshitamjn20/gunshot_keyboard/releases/latest).
+Visit the [KeyBang download website](https://eshitamjn20.github.io/sounding_keyboard/)
+or download `KeyBang.exe` from the [latest release](https://github.com/Eshitamjn20/sounding_keyboard/releases/latest).
 Open the EXE, preview a sound, and enable sounds. Windows may show a warning
 because the app is unsigned.
 
@@ -75,8 +75,8 @@ app removes the hook and shuts down the mixer.
 Open PowerShell in the folder where you keep projects:
 
 ```powershell
-git clone https://github.com/Eshitamjn20/gunshot_keyboard.git
-cd gunshot_keyboard
+git clone https://github.com/Eshitamjn20/sounding_keyboard.git
+cd sounding_keyboard
 ```
 
 ### 2. Create an environment and install dependencies
