@@ -1,6 +1,20 @@
 # KeyBang
 
-A free, offline Windows keyboard sound toy.
+A free, offline Windows app that plays sound effects as you type, with
+shotgun audio, volume control, and rhythm accents for fast typing.
+
+## Platform support
+
+| Platform | Supported? |
+| --- | --- |
+| Windows 10/11, Intel/AMD 64-bit | Current target; developed on Windows 11 with Python 3.14 |
+| macOS, including Apple Silicon | No — neither the EXE nor the current source works on macOS |
+| Linux | No — the keyboard listener is Windows-specific |
+
+Python source is not automatically cross-platform. `KeyboardHook` in
+`app.py` uses Windows `user32`/`kernel32` APIs through `ctypes`. A Mac version
+would need a macOS keyboard listener, permission handling for global input,
+and a separately built and tested macOS package. That port is not implemented.
 
 ## Try it
 
@@ -34,24 +48,112 @@ The listener temporarily tracks held key codes to suppress key repeat.
 It never saves typed text and makes no network connections. Closing the
 app removes the hook and shuts down the mixer.
 
-## Develop and build
+## Run from Git (Windows)
 
-With Python 3.14 on Windows:
+### Prerequisites
+
+- [Git for Windows](https://git-scm.com/downloads/win).
+- [Python 3.14 for Windows](https://www.python.org/downloads/windows/), 64-bit,
+  with Tcl/Tk support and the Python launcher. This is the tested version.
+- PowerShell and an audio output device.
+- Internet for cloning and installing dependencies. The app itself runs offline.
+
+### 1. Clone the repository
+
+Open PowerShell in the folder where you keep projects:
 
 ```powershell
-.\build.ps1
+git clone https://github.com/Eshitamjn20/gunshot_keyboard.git
+cd gunshot_keyboard
+```
+
+### 2. Create an environment and install dependencies
+
+```powershell
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+The `.venv` folder keeps this project's dependencies separate from other
+Python projects. These commands use its Python directly, so you do not need
+to activate the environment or change PowerShell's execution policy.
+If `py` is unavailable but `python --version` reports Python 3.14, use
+`python -m venv .venv` for the first command.
+
+### 3. Start the app
+
+From the repository folder:
+
+```powershell
 .\.venv\Scripts\python.exe app.py
+```
+
+Click **Preview sound**, then **Enable sounds**, and type in another app.
+Press **F8** to mute. Keep the window open or minimized; closing it exits.
+For later runs, repeat just this command. You do not need to build an EXE
+or download the original recording archive to run from source: the processed
+sample is included in `assets/shotgun.wav`.
+
+### 4. Get updates
+
+Close KeyBang first, then run these commands from the repository folder:
+
+```powershell
+git pull --ff-only
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe app.py
+```
+
+If Git reports conflicting local changes or diverged branches, resolve those
+before updating; do not discard your work just to run these commands.
+
+## Test and build an EXE (Windows)
+
+Run the automated checks using the environment above:
+
+```powershell
 .\.venv\Scripts\python.exe -m unittest -v
 ```
 
-The build script creates a local virtual environment and downloads
-PyInstaller and pygame-ce. The finished app works offline. Source-only
-development can instead use `python -m pip install -r requirements.txt`.
+To build a standalone EXE without running a PowerShell script:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-build.txt
+.\.venv\Scripts\python.exe -m PyInstaller --noconfirm --clean --onefile --windowed --add-data "assets;assets" --name KeyBang app.py
+```
+
+The result is `dist/KeyBang.exe`. Close any running copy before rebuilding
+because Windows locks running executables. The `--add-data` option includes
+the shotgun sample and credits; keep it in the command.
+
+Alternatively, with `python` available on PATH, `./build.ps1` creates the
+environment, installs build dependencies and builds the EXE. If PowerShell
+blocks scripts, use the explicit commands above.
+
+The build folders and EXE are ignored by Git. A fresh clone has source and
+assets, but no `dist` executable until you build one. Recipients of an EXE
+need neither Python nor Git.
+
+## Troubleshooting
+
+| Problem | What to check |
+| --- | --- |
+| `py` or `python` is not recognized | Install Python, then reopen PowerShell; use the alternate command described above. |
+| `No module named pygame` | Install `requirements.txt` with the same `.venv` Python used to launch the app. |
+| `No module named tkinter` | Modify/reinstall the Windows Python installation with Tcl/Tk support. |
+| Shotgun asset missing | Keep `assets/shotgun.wav` in the clone; include `--add-data "assets;assets"` when packaging. |
+| EXE build says access denied | Close the running KeyBang window before rebuilding. |
+| No sound | Enable sounds, raise the app volume, and check KeyBang's level and output device in Windows Volume Mixer. |
+| Audio feels delayed | Compare laptop speakers or wired headphones with Bluetooth; close duplicate KeyBang instances. End-to-end latency is not measured. |
+| F8 does not toggle | Try Fn+F8 if your keyboard uses media keys by default. Some apps may also act on F8. |
+| macOS reports a Windows API error | macOS is not supported by the current source; installing more Python packages will not add the missing listener. |
 
 ## Share
 
 Send `dist/KeyBang.exe`, or attach it to a GitHub repository release to
-provide a download link. No public release has been uploaded yet.
+provide a download link. For this update, a local build named
+`dist/KeyBang-Shotgun.exe` was also produced; the standard build command
+above produces `dist/KeyBang.exe`.
 You do not need to distribute `.venv` or `build`.
 
 This build targets Windows 10/11 Intel/AMD 64-bit PCs. Test on another
