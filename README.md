@@ -5,7 +5,7 @@ A free, offline Windows keyboard sound toy.
 ## Try it
 
 Open `dist/KeyBang.exe`, click **Preview sound**, then **Enable sounds**.
-Choose Gunshot, Arcade laser, or Soft pop and adjust the volume.
+Choose Gunshot, Deep shot, Arcade laser, or Soft pop and adjust the volume.
 **F8** mutes/unmutes from any normal desktop app. F8 still reaches that app.
 Starts muted at 20%. Minimize to keep it running; close to quit.
 No administrator access, account, server or paid API is required.
@@ -15,31 +15,35 @@ No administrator access, account, server or paid API is required.
 1. **Interface:** Python's Tkinter draws the window, buttons and slider.
 2. **Input:** `KeyboardHook` in `app.py` asks Windows for keyboard events,
    including while other apps are focused. Events pass onward unchanged.
-3. **Audio:** `make_sound` combines noise and tones and fades them out.
-   These original synthesized effects become temporary WAV files; volume
-   changes their amplitude. No third-party sound downloads are needed.
-4. **Responsiveness:** The hook queues play/toggle signals. The interface
-   checks every 10 ms and Windows plays the sound asynchronously.
+3. **Audio:** `synthesize` in `audio_engine.py` layers a sharp crack, low
+   body, filtered noise and short reflections. Three variations per effect
+   are preloaded into memory before listening starts.
+4. **Responsiveness:** The hook queues signals to a worker that wakes on
+   each event. An open pygame-ce mixer plays sounds with a 256-sample
+   buffer at 48 kHz (5.3 ms of samples, not total measured latency).
+   Up to 32 sounds can overlap. No audio files are opened on key presses;
+   the UI timer updates labels only. Smaller buffers reduce mixer latency:
+   https://www.pygame.org/docs/ref/mixer.html
 5. **Distribution:** PyInstaller bundles Python and the app into one EXE.
    Your friends do not need to install Python.
 
 The listener temporarily tracks held key codes to suppress key repeat.
 It never saves typed text and makes no network connections. Closing the
-app removes the hook and cleans up temporary audio files.
+app removes the hook and shuts down the mixer.
 
 ## Develop and build
 
 With Python 3.14 on Windows:
 
 ```powershell
-python app.py
-python -m unittest -v
 .\build.ps1
+.\.venv\Scripts\python.exe app.py
+.\.venv\Scripts\python.exe -m unittest -v
 ```
 
 The build script creates a local virtual environment and downloads
-PyInstaller. The finished app works offline. Running the source uses
-only Python's standard library.
+PyInstaller and pygame-ce. The finished app works offline. Source-only
+development can instead use `python -m pip install -r requirements.txt`.
 
 ## Share
 
@@ -54,17 +58,20 @@ code signing is optional and outside this free prototype.
 
 ## First-version limits and verification
 
-- Fast typing restarts the sound; effects do not overlap. Events inside
-  one 10 ms poll are coalesced so old sounds do not build up.
+- Sounds overlap during fast typing; at 32 active voices the oldest is
+  replaced. There is no deliberate event coalescing or playback timer.
 - Holding a key produces one sound, not automatic repeated shots.
 - Secure screens and some elevated apps/games may not provide events.
 - Settings reset at startup. No system tray or startup service yet.
-- Automated checks cover audio format, silence at zero volume, repeat
-  suppression, F8 routing, and forwarding events. Real speakers and
-  typing in other applications still need a hands-on check.
+- Automated checks cover audio format, attack/fade, variations, burst
+  playback, mute, repeat suppression, F8 routing and event forwarding.
+  Native mixer initialization and shutdown are also checked locally.
+  Real speaker latency and typing elsewhere need a hands-on check;
+  no end-to-end latency measurement has been made. Try laptop speakers
+  or wired headphones when evaluating delay, since Bluetooth adds latency.
 
 ## Learn by changing it
 
-Start with the decay numbers in `make_sound` to change the length of
+Start with the decay numbers in `audio_engine.py` to change the length of
 an effect. Then try adding another sound or saving settings in JSON.
 Build again after changes to generate an updated EXE.

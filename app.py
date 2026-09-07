@@ -1,36 +1,9 @@
 """KeyBang: offline Windows keyboard sound toy. Run with python app.py."""
 import ctypes
 from ctypes import wintypes
-import math
-from pathlib import Path
-import queue
-import random
-import struct
-import tempfile
 import tkinter as tk
 from tkinter import ttk, messagebox
-import wave
-import winsound
-
-
-def make_sound(path, style, volume):
-    """Synthesize original effects, so there are no downloaded audio assets."""
-    rng = random.Random(42)
-    rate = 22050
-    frames = bytearray()
-    for i in range(int(rate * 0.22)):
-        t = i / rate
-        noise = rng.uniform(-1, 1)
-        if style == 'Arcade laser':
-            sample = math.sin(2 * math.pi * (1200 * t - 2200 * t * t)) * math.exp(-22 * t)
-        elif style == 'Soft pop':
-            sample = (0.7 * math.sin(2 * math.pi * 170 * t) + 0.3 * noise) * math.exp(-45 * t)
-        else:
-            sample = (0.75 * noise + 0.25 * math.sin(2 * math.pi * 75 * t)) * math.exp(-27 * t)
-        frames.extend(struct.pack('<h', int(sample * 26000 * volume / 100)))
-    with wave.open(str(path), 'wb') as audio:
-        audio.setparams((1, 2, rate, 0, 'NONE', 'not compressed'))
-        audio.writeframes(frames)
+from audio_engine import AudioEngine, STYLES
 
 
 class KeyboardHook:
@@ -73,10 +46,7 @@ class KeyboardHook:
 class App:
     def __init__(self, root):
         self.root = root
-        self.enabled = False
-        self.events = queue.SimpleQueue()
-        self.temp = tempfile.TemporaryDirectory(prefix='keybang-')
-        self.cache = {}
+        self.audio = None
         self.hook = None
         root.title('KeyBang • Keyboard sound effects')
         root.geometry('500x520')
@@ -97,7 +67,8 @@ class App:
         self.toggle_button.pack(fill='x', pady=12)
         ttk.Label(panel, text='Sound effect').pack(anchor='w', pady=(10, 5))
         self.sound = tk.StringVar(value='Gunshot')
-        ttk.Combobox(panel, textvariable=self.sound, values=['Gunshot', 'Arcade laser', 'Soft pop'], state='readonly').pack(fill='x')
+        ttk.Combobox(panel, textvariable=self.sound, values=STYLES, state='readonly').pack(fill='x')
+        self.sound.trace_add('write', self.configure_audio)
         self.volume = tk.DoubleVar(value=20)
         self.volume_label = ttk.Label(panel, text='Volume · 20%')
         self.volume_label.pack(anchor='w', pady=(20, 0))
@@ -106,57 +77,42 @@ class App:
         ttk.Label(panel, text='F8 toggles mute from any app.\nWorks while minimized. Close the window to quit.\nOffline • No typing history • No account', font=('Segoe UI', 10), foreground='#9ca3af').pack(anchor='w', pady=22)
         root.protocol('WM_DELETE_WINDOW', self.close)
         try:
-            self.hook = KeyboardHook(self.events)
-        except OSError as exc:
-            messagebox.showerror('Keyboard listener unavailable', str(exc))
+            self.audio = AudioEngine()
+            self.hook = KeyboardHook(self.audio)
+        except Exception as exc:
+            messagebox.showerror('KeyBang could not start', str(exc))
             self.close()
             return
         root.after(10, self.poll)
 
+    def configure_audio(self, *_):
+        if self.audio:
+            self.audio.put((self.sound.get(), self.volume.get() / 100))
+
     def volume_changed(self, _):
         self.volume_label.configure(text=f'Volume · {int(self.volume.get())}%')
+        self.configure_audio()
 
     def toggle(self):
-        self.enabled = not self.enabled
-        self.status.configure(text='●  Listening' if self.enabled else '●  Muted')
-        self.toggle_button.configure(text='Mute sounds' if self.enabled else 'Enable sounds')
-        if not self.enabled:
-            winsound.PlaySound(None, 0)
+        self.audio.put('toggle')
 
     def play(self):
-        key = (self.sound.get(), int(self.volume.get()))
-        if key[1] == 0:
-            return
-        try:
-            if key not in self.cache:
-                path = Path(self.temp.name) / f'{len(self.cache)}.wav'
-                make_sound(path, *key)
-                self.cache[key] = str(path)
-            winsound.PlaySound(self.cache[key], winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT)
-        except (OSError, RuntimeError) as exc:
-            self.enabled = False
-            self.status.configure(text='Audio unavailable — try Preview')
-            self.toggle_button.configure(text='Enable sounds')
+        self.audio.put('preview')
 
     def poll(self):
-        # Coalesce bursts so a busy UI never plays a backlog of old keystrokes.
-        play = False
-        while not self.events.empty():
-            event = self.events.get()
-            if event == 'toggle':
-                self.toggle()
-                play = False
-            elif self.enabled:
-                play = True
-        if play and self.enabled:
-            self.play()
-        self.root.after(10, self.poll)
+        # This timer only refreshes labels. Sound never waits for it.
+        if self.audio.error:
+            self.status.configure(text='Audio unavailable — restart app')
+        else:
+            self.status.configure(text='●  Listening' if self.audio.enabled else '●  Muted')
+        self.toggle_button.configure(text='Mute sounds' if self.audio.enabled else 'Enable sounds')
+        self.root.after(50, self.poll)
 
     def close(self):
         if self.hook:
             self.hook.close()
-        winsound.PlaySound(None, 0)
-        self.temp.cleanup()
+        if self.audio:
+            self.audio.close()
         self.root.destroy()
 
 

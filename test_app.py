@@ -1,27 +1,42 @@
 import ctypes
-from pathlib import Path
 import queue
-import tempfile
 import unittest
-import wave
 from unittest.mock import Mock
-from app import KeyboardHook, make_sound
+from app import KeyboardHook
+from audio_engine import AudioEngine, synthesize, STYLES
+from unittest.mock import patch
+import struct
 
 
 class Tests(unittest.TestCase):
     def test_audio(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / 'sound.wav'
-            for style in ('Gunshot', 'Arcade laser', 'Soft pop'):
-                for volume in (0, 20, 100):
-                    make_sound(path, style, volume)
-                    with wave.open(str(path)) as audio:
-                        self.assertEqual(audio.getnchannels(), 1)
-                        self.assertEqual(audio.getsampwidth(), 2)
-                        self.assertEqual(audio.getframerate(), 22050)
-                        frames = audio.readframes(audio.getnframes())
-                        self.assertEqual(len(frames), 9702)
-                        self.assertEqual(any(frames), volume != 0)
+        for style in STYLES:
+            data = synthesize(style)
+            self.assertEqual(len(data), 26880)
+            samples = struct.unpack('<13440h', data)
+            self.assertEqual(samples[0], 0)
+            self.assertEqual(samples[-1], 0)
+            self.assertEqual(max(abs(x) for x in samples), 16000)
+            self.assertTrue(any(samples[:48]))  # Attack starts within 1 ms.
+            self.assertTrue(data != synthesize(style, 1), style)
+
+    def test_burst_is_not_coalesced_and_mute_stops_audio(self):
+        with patch('audio_engine.mixer') as mixer:
+            engine = AudioEngine()
+            engine.put('play')  # Starts muted.
+            engine.put('toggle')
+            for _ in range(12):
+                engine.put('play')
+            engine.put('toggle')
+            engine.put('play')  # Muted again.
+            engine.put(('Deep shot', 0.4))
+            engine.put('preview')
+            engine.close()  # Drains prior commands before stopping.
+            self.assertEqual(mixer.find_channel.return_value.play.call_count, 13)
+            mixer.find_channel.return_value.set_volume.assert_called_with(0.4)
+            mixer.stop.assert_called_once()
+            mixer.quit.assert_called_once()
+            self.assertFalse(engine.worker.is_alive())
 
     def test_repeat_release_hotkey_and_forwarding(self):
         hook = KeyboardHook.__new__(KeyboardHook)
