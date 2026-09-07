@@ -4,5 +4,6 @@ build/
 dist/
 release-build/
 clean-build-*/
+.website-checkout/
 *.spec
 sounds-source.zip

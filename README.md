@@ -3,17 +3,21 @@
 A free, offline Windows app that plays sound effects as you type, with
 shotgun audio, volume control, and rhythm accents for fast typing.
 
-## Download without Git or Python
+## Release status and contact
 
-Visit the [KeyBang download website](https://eshitamjn20.github.io/sounding_keyboard/)
-or download `KeyBang.exe` from the [latest release](https://github.com/Eshitamjn20/sounding_keyboard/releases/latest).
-Open the EXE, preview a sound, and enable sounds. Windows may show a warning
-because the app is unsigned.
+**Downloads are paused while a Microsoft Defender detection is unresolved.**
+The original release was detected as `Trojan:Win32/Wacatac.B!ml`. A fresh
+build scanned clean locally; that does not establish vendor clearance.
+See [the investigation](SECURITY-INVESTIGATION.md) and
+[security reporting](SECURITY.md). Do not disable protection to run a build.
 
-The website source is in `docs/`. GitHub Pages serves that folder from `main`.
-Its download button targets the latest release asset named `KeyBang.exe`.
-When publishing updates, build the EXE and attach it under that exact name
-to the new release. Keep the sound credits with the app.
+- App source: https://github.com/Eshitamjn20/sounding_keyboard
+- Website source: https://github.com/Eshitamjn20/keybang-website
+- Website: https://eshitamjn20.github.io/keybang-website/
+- Public contact: https://github.com/Eshitamjn20/sounding_keyboard/issues
+
+The website contains no executable. Once review is resolved, approved builds
+will be distributed as GitHub Release assets in this application repository.
 
 ## Platform support
 
@@ -160,18 +164,12 @@ need neither Python nor Git.
 | F8 does not toggle | Try Fn+F8 if your keyboard uses media keys by default. Some apps may also act on F8. |
 | macOS reports a Windows API error | macOS is not supported by the current source; installing more Python packages will not add the missing listener. |
 
-## Share
+## Distribution after review
 
-Send `dist/KeyBang.exe`, or attach it to a GitHub repository release to
-provide a download link. For this update, a local build named
-`dist/KeyBang-Shotgun.exe` was also produced; the standard build command
-above produces `dist/KeyBang.exe`.
-You do not need to distribute `.venv` or `build`.
-
-This build targets Windows 10/11 Intel/AMD 64-bit PCs. Test on another
-PC without Python before claiming broader compatibility. The executable
-is unsigned, so Windows/antivirus may show a reputation warning. Paid
-code signing is optional and outside this free prototype.
+Keep `KeyBang.exe` in this repository's GitHub Releases, not in source control
+or in the website repository. See [RELEASING.md](RELEASING.md) for the release
+checklist and stable download URL. Keep the current release in draft until
+review is resolved. Do not publish a build merely because one scanner passed.
 
 ## First-version limits and verification
 

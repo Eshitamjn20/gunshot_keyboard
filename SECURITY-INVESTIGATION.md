@@ -1,8 +1,8 @@
 # KeyBang antivirus investigation — 2026-09-07
 
-Status: unresolved detection. Public download release remains a draft and
-GitHub Pages remains disabled. Do not redistribute a replacement based only
-on a clean local scan.
+Status: unresolved detection. Public download release remains a draft.
+The separate website is an information page with downloads disabled.
+Do not redistribute a replacement based only on a clean local scan.
 
 ## Exact published build
 
@@ -80,3 +80,18 @@ Defender custom scan completed and reported **no threats** for this binary.
 The EXE was not executed, uploaded, or published. This local scan is not
 independent vendor clearance and does not explain or overturn the original
 release detection. Public downloads remain disabled pending further review.
+
+## Repository cleanup and submission preparation
+
+Website files moved to `Eshitamjn20/keybang-website`; app source and binary
+release ownership remain in `Eshitamjn20/sounding_keyboard`. The new website
+has no active download link. The original app repository's Pages remains off.
+
+Removed obsolete local build output, generated specs, caches, the downloaded
+sound-source archive, and the duplicate clean-build environment and wheels.
+Retained the clean candidate, copied source, verification script and records
+under ignored `clean-build-20260907/`. Published sanitized wheel verification,
+hash lock and candidate hash records under `security/evidence/`.
+
+Prepared `security/MICROSOFT-SUBMISSION.md`. The portal requires Microsoft
+sign-in; no submission has been confirmed and there is no vendor verdict.
