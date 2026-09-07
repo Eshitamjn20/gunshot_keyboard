@@ -49,8 +49,8 @@ class App:
         self.audio = None
         self.hook = None
         root.title('KeyBang • Keyboard sound effects')
-        root.geometry('500x520')
-        root.minsize(460, 500)
+        root.geometry('500x580')
+        root.minsize(460, 580)
         root.configure(bg='#111827')
         style = ttk.Style()
         style.theme_use('clam')
@@ -66,14 +66,17 @@ class App:
         self.toggle_button = ttk.Button(panel, text='Enable sounds', command=self.toggle)
         self.toggle_button.pack(fill='x', pady=12)
         ttk.Label(panel, text='Sound effect').pack(anchor='w', pady=(10, 5))
-        self.sound = tk.StringVar(value='Gunshot')
+        self.sound = tk.StringVar(value='Shotgun')
         ttk.Combobox(panel, textvariable=self.sound, values=STYLES, state='readonly').pack(fill='x')
         self.sound.trace_add('write', self.configure_audio)
-        self.volume = tk.DoubleVar(value=20)
-        self.volume_label = ttk.Label(panel, text='Volume · 20%')
+        self.volume = tk.DoubleVar(value=60)
+        self.rhythm = tk.BooleanVar(value=True)
+        self.volume_label = ttk.Label(panel, text='Volume · 60%')
         self.volume_label.pack(anchor='w', pady=(20, 0))
         ttk.Scale(panel, from_=0, to=100, variable=self.volume, command=self.volume_changed).pack(fill='x', pady=8)
         ttk.Button(panel, text='Preview sound', command=self.play).pack(fill='x')
+        ttk.Checkbutton(panel, text='Rhythm accents · follows your typing', variable=self.rhythm, command=self.configure_audio).pack(anchor='w', pady=(14, 0))
+        ttk.Button(panel, text='Sound credits', command=lambda: messagebox.showinfo('Sound credits', 'Shotgun recording: Copyright 2009 Vincent Sevedge (Tabasco).\nGunshot Sounds — OpenGameArt.org/content/gunshot-sounds\nCreative Commons Attribution 3.0\nhttps://creativecommons.org/licenses/by/3.0/\nModified for KeyBang: trimmed, layered, compressed and faded.')).pack(anchor='w', pady=(8, 0))
         ttk.Label(panel, text='F8 toggles mute from any app.\nWorks while minimized. Close the window to quit.\nOffline • No typing history • No account', font=('Segoe UI', 10), foreground='#9ca3af').pack(anchor='w', pady=22)
         root.protocol('WM_DELETE_WINDOW', self.close)
         try:
@@ -87,7 +90,7 @@ class App:
 
     def configure_audio(self, *_):
         if self.audio:
-            self.audio.put((self.sound.get(), self.volume.get() / 100))
+            self.audio.put((self.sound.get(), self.volume.get() / 100, self.rhythm.get()))
 
     def volume_changed(self, _):
         self.volume_label.configure(text=f'Volume · {int(self.volume.get())}%')

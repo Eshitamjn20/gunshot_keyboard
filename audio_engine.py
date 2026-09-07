@@ -5,12 +5,14 @@ import queue
 import random
 import struct
 import threading
+import time
+from pathlib import Path
 
 os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 from pygame import mixer
 
 RATE = 48000
-STYLES = ('Gunshot', 'Deep shot', 'Arcade laser', 'Soft pop')
+STYLES = ('Shotgun', 'Gunshot', 'Deep shot', 'Arcade laser', 'Soft pop')
 
 
 def synthesize(style, variant=0):
@@ -49,13 +51,18 @@ def synthesize(style, variant=0):
 class AudioEngine:
     def __init__(self):
         mixer.init(frequency=RATE, size=-16, channels=1, buffer=256, allowedchanges=0)
-        mixer.set_num_channels(32)
-        self.bank = {style: [mixer.Sound(buffer=synthesize(style, i)) for i in range(3)] for style in STYLES}
+        mixer.set_num_channels(4)
+        self.channels = [mixer.Channel(i) for i in range(4)]
+        self.bank = {style: [mixer.Sound(buffer=synthesize(style, i)) for i in range(3)] for style in STYLES if style != 'Shotgun'}
+        shotgun = mixer.Sound(str(Path(__file__).resolve().parent / 'assets' / 'shotgun.wav'))
+        self.bank['Shotgun'] = [shotgun] * 3
         self.enabled = False
         self.error = None
-        self.style = 'Gunshot'
-        self.volume = 0.2
+        self.style = 'Shotgun'
+        self.volume = 0.6
         self.index = 0
+        self.last_hit = None
+        self.rhythm = True
         self.events = queue.SimpleQueue()
         self.worker = threading.Thread(target=self.run, name='KeyBang audio', daemon=True)
         self.worker.start()
@@ -70,17 +77,30 @@ class AudioEngine:
                 break
             try:
                 if isinstance(event, tuple):
-                    self.style, self.volume = event
+                    self.style, self.volume = event[:2]
+                    if len(event) > 2:
+                        self.rhythm = event[2]
                 elif event == 'toggle':
                     self.enabled = not self.enabled
                     if not self.enabled:
                         mixer.stop()
+                        self.last_hit = None
                 elif event == 'preview' or (event == 'play' and self.enabled):
                     if self.volume > 0:
-                        channel = mixer.find_channel(force=True)
-                        channel.set_volume(self.volume)
-                        channel.play(self.bank[self.style][self.index % 3])
+                        now = time.monotonic()
+                        gap = now - self.last_hit if self.last_hit is not None else 1
+                        if gap > 0.45 or event == 'preview':
+                            self.index = 0
+                        # Leave room for the new attack without clipping the sum.
+                        for old in self.channels:
+                            old.set_volume(self.volume * 0.045)
+                            old.fadeout(35)
+                        accent = (1.0, 0.82, 0.92, 0.82)[self.index % 4] if self.rhythm else 1.0
+                        channel = self.channels[self.index % 4]
+                        channel.set_volume(self.volume * accent)
+                        channel.play(self.bank[self.style][self.index % 3], maxtime=150 if gap < 0.12 else 430)
                         self.index += 1
+                        self.last_hit = now
             except Exception as exc:
                 self.error = str(exc)
                 self.enabled = False

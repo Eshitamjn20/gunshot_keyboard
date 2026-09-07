@@ -5,9 +5,11 @@ A free, offline Windows keyboard sound toy.
 ## Try it
 
 Open `dist/KeyBang.exe`, click **Preview sound**, then **Enable sounds**.
-Choose Gunshot, Deep shot, Arcade laser, or Soft pop and adjust the volume.
+Choose Shotgun, Gunshot, Deep shot, Arcade laser, or Soft pop and adjust the volume.
 **F8** mutes/unmutes from any normal desktop app. F8 still reaches that app.
-Starts muted at 20%. Minimize to keep it running; close to quit.
+Starts muted at 60%. Minimize to keep it running; close to quit.
+Rhythm accents follow your keystrokes immediately with a four-hit pattern;
+there is no fixed BPM or beat-grid delay. A pause resets the pattern.
 No administrator access, account, server or paid API is required.
 
 ## How it works: a beginner's tour
@@ -15,13 +17,14 @@ No administrator access, account, server or paid API is required.
 1. **Interface:** Python's Tkinter draws the window, buttons and slider.
 2. **Input:** `KeyboardHook` in `app.py` asks Windows for keyboard events,
    including while other apps are focused. Events pass onward unchanged.
-3. **Audio:** `synthesize` in `audio_engine.py` layers a sharp crack, low
-   body, filtered noise and short reflections. Three variations per effect
-   are preloaded into memory before listening starts.
+3. **Audio:** The default Shotgun uses a processed real recording, with
+   pre-shot noise trimmed, a low body layer and compression. See
+   `assets/CREDITS.md` for source attribution and licensing. Other effects
+   are synthesized. All effects are preloaded before listening starts.
 4. **Responsiveness:** The hook queues signals to a worker that wakes on
    each event. An open pygame-ce mixer plays sounds with a 256-sample
    buffer at 48 kHz (5.3 ms of samples, not total measured latency).
-   Up to 32 sounds can overlap. No audio files are opened on key presses;
+   Four channels let tails fade beneath fresh attacks. No files open per press;
    the UI timer updates labels only. Smaller buffers reduce mixer latency:
    https://www.pygame.org/docs/ref/mixer.html
 5. **Distribution:** PyInstaller bundles Python and the app into one EXE.
@@ -58,13 +61,17 @@ code signing is optional and outside this free prototype.
 
 ## First-version limits and verification
 
-- Sounds overlap during fast typing; at 32 active voices the oldest is
-  replaced. There is no deliberate event coalescing or playback timer.
+- Earlier sounds fade over 35 ms at reduced volume for mix headroom.
+  Hits less than 120 ms apart get 150 ms tails; slower hits get 430 ms.
+  Rhythm accents use a repeating strong/soft/medium/soft pattern and reset
+  after 450 ms idle. Disable the checkbox for equal accents. No input
+  events are deliberately coalesced or held back to align with a beat.
 - Holding a key produces one sound, not automatic repeated shots.
 - Secure screens and some elevated apps/games may not provide events.
 - Settings reset at startup. No system tray or startup service yet.
 - Automated checks cover audio format, attack/fade, variations, burst
-  playback, mute, repeat suppression, F8 routing and event forwarding.
+  playback, rhythm accents/reset, rapid-tail selection, shotgun sample
+  bounds, mute, repeat suppression, F8 routing and event forwarding.
   Native mixer initialization and shutdown are also checked locally.
   Real speaker latency and typing elsewhere need a hands-on check;
   no end-to-end latency measurement has been made. Try laptop speakers
